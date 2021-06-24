@@ -22,7 +22,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2.5.0
         with:
-          file: ./Dockerfile
+          file: ./Dockerfile.prod
           push: true
           tags: |
             atsigncompany/filebin2:automated
