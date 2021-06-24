@@ -12,7 +12,7 @@ import (
 
 func (h *HTTP) Index(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "max-age=0")
-	w.Header().Set("X-Robots-Tag", "index, noarchive")
+	w.Header().Set("X-Robots-Tag", "index, follow, noarchive")
 
 	type Data struct {
 		ds.Common
@@ -34,19 +34,14 @@ func (h *HTTP) Index(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Bin = *bin
 
-	info, err := h.dao.Info().GetInfo()
-	if err != nil {
-		fmt.Printf("Unable to GetInfo(): %s\n", err.Error())
-		http.Error(w, "Errno 326", http.StatusInternalServerError)
-		return
-	}
-
 	// Storage limit
 	// 0 disables the limit
 	// >= 1 enforces a limit, in number of gigabytes stored
 	data.AvailableStorage = true
 	if h.config.LimitStorageBytes > 0 {
-		if uint64(info.CurrentBytes) >= h.config.LimitStorageBytes {
+		totalBytesConsumed := h.dao.Info().StorageBytesAllocated()
+		//fmt.Printf("Using %d bytes, limit is %d bytes\n", totalBytesConsumed, h.config.LimitStorageBytes)
+		if totalBytesConsumed >= h.config.LimitStorageBytes {
 			data.AvailableStorage = false
 		}
 	}
@@ -59,7 +54,9 @@ func (h *HTTP) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTP) About(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=900")
+	w.Header().Set("Cache-Control", "max-age=3600")
+	w.Header().Set("X-Robots-Tag", "index, follow")
+
 	type Data struct {
 		ds.Common
 	}
@@ -74,7 +71,9 @@ func (h *HTTP) About(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTP) Privacy(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=900")
+	w.Header().Set("Cache-Control", "max-age=3600")
+	w.Header().Set("X-Robots-Tag", "index, follow")
+
 	type Data struct {
 		ds.Common
 		Bin ds.Bin `json:"bin"`
@@ -90,7 +89,9 @@ func (h *HTTP) Privacy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTP) Terms(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=900")
+	w.Header().Set("Cache-Control", "max-age=3600")
+	w.Header().Set("X-Robots-Tag", "index, follow")
+
 	type Data struct {
 		ds.Common
 		Bin ds.Bin `json:"bin"`
@@ -106,7 +107,8 @@ func (h *HTTP) Terms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTP) API(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=900")
+	w.Header().Set("Cache-Control", "max-age=3600")
+	w.Header().Set("X-Robots-Tag", "index, follow")
 
 	type Data struct {
 		ds.Common
@@ -123,7 +125,7 @@ func (h *HTTP) API(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTP) APISpec(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "max-age=900")
+	w.Header().Set("Cache-Control", "max-age=3600")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	type Data struct {
@@ -134,7 +136,6 @@ func (h *HTTP) APISpec(w http.ResponseWriter, r *http.Request) {
 	data.Page = "api"
 
 	w.Header().Set("Content-Type", "text/plain")
-	//w.Header().Set("Cache-Control", "max-age=900")
 	if err := h.templates.ExecuteTemplate(w, "apispec", data); err != nil {
 		fmt.Printf("Failed to execute template: %s\n", err.Error())
 		http.Error(w, "Errno 302", http.StatusInternalServerError)
@@ -144,6 +145,7 @@ func (h *HTTP) APISpec(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTP) FilebinStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "max-age=1")
+	w.Header().Set("X-Robots-Tag", "none")
 
 	type Data struct {
 		AppStatus bool `json:"app-status"`
@@ -171,7 +173,6 @@ func (h *HTTP) FilebinStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "max-age=1")
 	out, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
 		fmt.Printf("Failed to parse json: %s\n", err.Error())

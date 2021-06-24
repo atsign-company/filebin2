@@ -8,7 +8,6 @@
         <link rel="icon" href="/static/img/favicon.png">
         <link rel="stylesheet" href="/static/css/bootstrap.min.css"/>
         <link rel="stylesheet" href="/static/css/fontawesome.all.min.css"/>
-        <link rel="stylesheet" href="/static/css/upload.css"/>
         <link rel="stylesheet" href="/static/css/custom.css"/>
         <title>Filebin | About</title>
     </head>
@@ -70,11 +69,6 @@
                 <td>MinIO Go Client SDK</td>
                 <td>Apache 2.0</td>
                 <td><a href="https://github.com/minio/minio-go/">https://github.com/minio/minio-go/</a></td>
-            </tr>
-            <tr>
-                <td>MinIO Secure IO</td>
-                <td>Apache 2.0</td>
-                <td><a href="https://github.com/minio/sio/">https://github.com/minio/sio/</a></td>
             </tr>
             <tr>
                 <td>Popper</td>

@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -62,13 +63,13 @@ func (h *HTTP) Init() (err error) {
 	h.router.Handle("/static/{path:.*}", http.StripPrefix("/static/", CacheControl(http.FileServer(h.staticBox.HTTPBox())))).Methods(http.MethodHead, http.MethodGet)
 	h.router.HandleFunc("/archive/{bin:[A-Za-z0-9_-]+}/{format:[a-z]+}", h.Log(h.BanLookup(h.Archive))).Methods(http.MethodHead, http.MethodGet)
 	h.router.HandleFunc("/qr/{bin:[A-Za-z0-9_-]+}", h.BanLookup(h.BinQR)).Methods(http.MethodHead, http.MethodGet)
-	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/", h.Log(h.BanLookup(h.ViewBinRedirect))).Methods(http.MethodHead, http.MethodGet)
-	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.Log(h.BanLookup(h.ViewBin))).Methods(http.MethodHead, http.MethodGet)
+	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/", h.BanLookup(h.ViewBinRedirect)).Methods(http.MethodHead, http.MethodGet)
+	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.BanLookup(h.ViewBin)).Methods(http.MethodHead, http.MethodGet)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.Log(h.BanLookup(h.DeleteBin))).Methods(http.MethodDelete)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.Log(h.BanLookup(h.LockBin))).Methods("PUT")
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.GetFile))).Methods(http.MethodHead, http.MethodGet)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.DeleteFile))).Methods(http.MethodDelete)
-	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.UploadFile))).Methods(http.MethodPost)
+	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.UploadFile))).Methods(http.MethodPost, http.MethodPut)
 
 	h.config.ExpirationDuration = time.Second * time.Duration(h.config.Expiration)
 	return err
@@ -76,7 +77,7 @@ func (h *HTTP) Init() (err error) {
 
 func CacheControl(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "must-revalidate, public, max-age=604800")
+		w.Header().Set("Cache-Control", "must-revalidate, public, max-age=86400")
 		h.ServeHTTP(w, r)
 	})
 }
@@ -167,10 +168,12 @@ func (h *HTTP) Run() {
 
 	// Set up the server
 	srv := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", h.config.HttpHost, h.config.HttpPort),
-		Handler:      handler,
-		ReadTimeout:  2 * time.Hour,
-		WriteTimeout: 2 * time.Hour,
+		Addr:              fmt.Sprintf("%s:%d", h.config.HttpHost, h.config.HttpPort),
+		Handler:           handler,
+		ReadTimeout:       1 * time.Hour,
+		WriteTimeout:      1 * time.Hour,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
 	}
 
 	// Start the server
@@ -185,29 +188,12 @@ func (h *HTTP) Error(w http.ResponseWriter, r *http.Request, internal string, ex
 		fmt.Printf("Errno %d: %s\n", errno, internal)
 	}
 
-	//var msg ds.Message
-	//msg.Id = errno
-	//msg.Text = external
+	// Disregard any request body there is
+	io.Copy(ioutil.Discard, r.Body)
 
 	w.WriteHeader(statusCode)
 	io.WriteString(w, external)
-
-	//if r.Header.Get("accept") == "application/json" {
-	//	w.Header().Set("Content-Type", "application/json")
-	//	out, err := json.MarshalIndent(msg, "", "    ")
-	//	if err != nil {
-	//		fmt.Printf("Failed to parse json: %s\n", err.Error())
-	//		http.Error(w, "Errno 1000", http.StatusInternalServerError)
-	//		return
-	//	}
-	//	io.WriteString(w, string(out))
-	//} else {
-	//	if err := h.templates.ExecuteTemplate(w, "message", msg); err != nil {
-	//		fmt.Printf("Failed to execute template: %s\n", err.Error())
-	//		http.Error(w, "Errno 1001", http.StatusInternalServerError)
-	//		return
-	//	}
-	//}
+	return
 }
 
 // Parse all templates
