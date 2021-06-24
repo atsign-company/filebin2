@@ -24,6 +24,7 @@ RUN apt-get update && \
   chown -R filebin2:filebin2 /var/log/filebin
 COPY --from=build --chown=filebin2:filebin2 /app/filebin2 \
   /usr/local/bin/filebin2
+COPY --chown=filebin2:filebin2 ./static $HOMEDIR/static
 WORKDIR $HOMEDIR
 USER filebin2
 ENTRYPOINT ["/usr/local/bin/filebin2"]
