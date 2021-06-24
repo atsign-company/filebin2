@@ -12,7 +12,6 @@
 
         <link rel="stylesheet" href="/static/css/bootstrap.min.css"/>
         <link rel="stylesheet" href="/static/css/fontawesome.all.min.css"/>
-        <link rel="stylesheet" href="/static/css/upload.css"/>
         <link rel="stylesheet" href="/static/css/custom.css"/>
 
         <title>Filebin | {{ .Bin.Id }}</title>
@@ -61,7 +60,7 @@
             <span id="fileCount"></span>
 
             <!-- Drop zone -->
-            <span id="fileDrop">Drop files to upload</span>
+            <span id="fileDrop"></span>
 
             <!-- Upload queue -->
             <span id="fileList"></span>

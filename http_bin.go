@@ -22,7 +22,7 @@ import (
 // to exclude from robots.txt
 func (h *HTTP) ViewBinRedirect(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "max-age=3600")
-	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("X-Robots-Tag", "none, noarchive")
 
 	params := mux.Vars(r)
 	inputBin := params["bin"]
@@ -36,7 +36,7 @@ func (h *HTTP) ViewBinRedirect(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTP) ViewBin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "max-age=0")
-	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("X-Robots-Tag", "none, noarchive")
 
 	params := mux.Vars(r)
 	inputBin := params["bin"]
@@ -110,7 +110,7 @@ func (h *HTTP) ViewBin(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTP) BinQR(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "max-age=0")
-	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("X-Robots-Tag", "none, noarchive")
 
 	params := mux.Vars(r)
 	inputBin := params["bin"]
@@ -138,7 +138,7 @@ func (h *HTTP) BinQR(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTP) Archive(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "max-age=0")
-	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("X-Robots-Tag", "none, noarchive")
 
 	params := mux.Vars(r)
 	inputBin := params["bin"]
@@ -188,7 +188,7 @@ func (h *HTTP) Archive(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fp, err := h.s3.GetObject(bin.Id, file.Filename, file.Nonce, 0, 0)
+			fp, err := h.s3.GetObject(bin.Id, file.Filename, 0, 0)
 			if err != nil {
 				h.Error(w, r, fmt.Sprintf("Failed to archive object in bin %s: filename %s: %s", bin.Id, file.Filename, err.Error()), "Archive error", 300, http.StatusInternalServerError)
 				return
@@ -223,7 +223,7 @@ func (h *HTTP) Archive(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fp, err := h.s3.GetObject(bin.Id, file.Filename, file.Nonce, 0, 0)
+			fp, err := h.s3.GetObject(bin.Id, file.Filename, 0, 0)
 			if err != nil {
 				h.Error(w, r, fmt.Sprintf("Failed to archive object in bin %s: filename %s: %s", bin.Id, file.Filename, err.Error()), "Archive error", 300, http.StatusInternalServerError)
 				return
