@@ -67,7 +67,7 @@ func (h *HTTP) Init() (err error) {
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.BanLookup(h.ViewBin)).Methods(http.MethodHead, http.MethodGet)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.Log(h.BanLookup(h.DeleteBin))).Methods(http.MethodDelete)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}", h.Log(h.BanLookup(h.LockBin))).Methods("PUT")
-	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.GetFile))).Methods(http.MethodHead, http.MethodGet)
+	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.GetFile))).Methods(http.MethodGet)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.DeleteFile))).Methods(http.MethodDelete)
 	h.router.HandleFunc("/{bin:[A-Za-z0-9_-]+}/{filename:.+}", h.Log(h.BanLookup(h.UploadFile))).Methods(http.MethodPost, http.MethodPut)
 
@@ -77,7 +77,7 @@ func (h *HTTP) Init() (err error) {
 
 func CacheControl(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "must-revalidate, public, max-age=86400")
+		w.Header().Set("Cache-Control", "max-age=86400")
 		h.ServeHTTP(w, r)
 	})
 }
@@ -191,6 +191,7 @@ func (h *HTTP) Error(w http.ResponseWriter, r *http.Request, internal string, ex
 	// Disregard any request body there is
 	io.Copy(ioutil.Discard, r.Body)
 
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(statusCode)
 	io.WriteString(w, external)
 	return

@@ -51,7 +51,7 @@
     </head>
     <body class="container-xl">
 
-        {{template "topbar" .}}
+        {{ template "topbar" . }}
 
         <h1>Filebin</h1>
 
@@ -72,14 +72,14 @@
         {{ if isAvailable .Bin }}
             {{ if eq $numfiles 0 }}
                 {{ if eq .Bin.Readonly false }}
-                    <p>This bin is empty. To upload files, click <em>Upload files</em> below or drag-and-drop the files into this browser window.</p>
+                    <div>This bin is empty. To upload files, click <em>Upload files</em> below or drag-and-drop the files into this browser window.</div>
 
-                    <p class="fileUpload btn btn-primary">
+                    <div class="mt-3 fileUpload btn btn-primary">
                         <span><i class="fa fa-cloud-upload"></i> Upload files</span>
-                        <input type="file" class="upload" id="fileField" multiple>
-                    </p>
+                        <input type="file" class="upload" id="fileField" multiple/>
+                    </div>
                 {{ else }}
-                    <p>This bin is empty. Files can not be uploaded to it since it is locked.</p>
+                    <div>This bin is empty. Files can not be uploaded to it since it is locked.</div>
                 {{ end }}
             {{ else }}
                 The bin <a class="link-primary link-custom" href="/{{ .Bin.Id }}">{{ .Bin.Id }}</a> was created {{ .Bin.CreatedAtRelative }}
@@ -102,7 +102,7 @@
                     {{ end }}
                 {{ end }}
             {{ else }}
-                <p>This bin is no longer available.</p>
+                <div>This bin is no longer available.</div>
             {{ end }}
         </p>
 
@@ -127,7 +127,7 @@
                                                 <span>
                                                     <i class="fas fa-fw fa-cloud-upload-alt text-primary"></i> Upload more files
                                                 </span>
-                                                <input type="file" class="upload" id="fileField" multiple>
+                                                <input type="file" class="upload" id="fileField" multiple/>
                                             </span>
                                         </li>
                                     {{ end }}
@@ -187,7 +187,7 @@
                                         <i class="far fa-fw fa-file"></i>
                                     {{ end }}
                                 {{ end }}
-                    {{ if isApproved $.Bin }}
+                                {{ if isApproved $.Bin }}
                                     <a class="link-primary link-custom" href="{{ .URL }}">{{ .Filename }}</a>
                                 {{ else }}
                                     {{ .Filename }}
@@ -208,11 +208,11 @@
                                         More
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownFileMenuButton">
-                            {{ if isApproved $.Bin }}
+                                        {{ if isApproved $.Bin }}
                                             <a class="dropdown-item" href="{{ .URL }}">
                                                 <i class="fas fa-fw fa-cloud-download-alt text-primary"></i> Download file
                                             </a>
-                            {{ end }}
+                                        {{ end }}
                                         <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalFileProperties-{{ $index }}">
                                             <i class="fas fa-fw fa-info-circle text-primary"></i> File properties
                                         </a>
@@ -234,7 +234,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modelArchiveTitle">Download files</h5>
+                        <h5 class="modal-title" id="modalArchiveTitle">Download files</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -270,7 +270,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header alert-secondary">
-                        <h5 class="modal-title" id="modelDeleteBinTitle">Delete bin</h5>
+                        <h5 class="modal-title" id="modalDeleteBinTitle">Delete bin</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -286,7 +286,7 @@
                         <div class="pull-left">
                         <button type="button" class="btn btn-danger" id="deleteButton" onclick="deleteURL('/{{ $.Bin.Id }}','deleteStatus')"><i class="fas fa-fw fa-trash-alt"></i> Confirm</button>
                         </div>
-                        <a class="btn btn-secondary" href="/{{ $.Bin.Id }}" class="btn btn-secondary"><i class="fa fa-close"></i> Close</a>
+                        <a href="/{{ $.Bin.Id }}" class="btn btn-secondary"><i class="fa fa-close"></i> Close</a>
                     </div>
                 </div>
             </div>
@@ -298,11 +298,11 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header alert-secondary">
-                        <h5 class="modal-title" id="modelBinPropertiesTitle">Bin properties</h5>
+                        <h5 class="modal-title" id="modalBinPropertiesTitle">Bin properties</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <ul class="row">
+                        <dl class="row">
                             <dt class="col-sm-3">Bin</dt>
                             <dd class="col-sm-9">
                                 <a class="link-primary link-custom" href="/{{ $.Bin.Id }}">
@@ -317,17 +317,16 @@
 
                             <dt class="col-sm-3">Total size</dt>
                             <dd class="col-sm-9">
-                                {{ $.Bin.BytesReadable }}
-                                ({{ $.Bin.Bytes }} bytes)
+                                {{ $.Bin.BytesReadable }} ({{ $.Bin.Bytes }} bytes)
                             </dd>
 
                             <dt class="col-sm-3">Status</dt>
                             <dd class="col-sm-9">
                                 {{ if $.Bin.Readonly }}
-                        Locked, which means that new files can not be uploaded and existing files can not be updated.
-                    {{ else }}
-                        Unlocked, which means that files can be uploaded and updated.
-                    {{ end }}
+                                    Locked, which means that new files can not be uploaded and existing files can not be updated.
+                                {{ else }}
+                                    Unlocked, which means that files can be uploaded and updated.
+                                {{ end }}
                             </dd>
 
                             <dt class="col-sm-3">Created</dt>
@@ -341,9 +340,9 @@
                                 {{ if isApproved $.Bin }}
                                     {{ $.Bin.ApprovedAtRelative }}
                                     ({{ $.Bin.ApprovedAt.Time.Format "2006-01-02 15:04:05 UTC" }})
-                    {{ else }}
-                        Pending approval, which means that file downloads are not yet allowed.
-                    {{ end }}
+                                {{ else }}
+                                    Pending approval, which means that file downloads are not yet allowed.
+                                {{ end }}
                             </dd>
 
                             <dt class="col-sm-3">Last updated</dt>
@@ -359,7 +358,7 @@
                                 {{ end }}
                                 ({{ $.Bin.ExpiredAt.Format "2006-01-02 15:04:05 UTC" }})
                             </dd>
-                        </ul>
+                        </dl>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -374,14 +373,14 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header alert-secondary">
-                        <h5 class="modal-title" id="modelBinQRTitle">QR code</h5>
+                        <h5 class="modal-title" id="modalBinQRTitle">QR code</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <p>The URL to this bin is <a href="{{ .BinUrl }}">{{ .BinUrl }}</a>, which is embedded in the QR code below. This can be used to conveniently share the URL across mobile devices without having to type out the URL.</p>
 
                         <div class="text-center">
-                            <img src="/qr/{{ $.Bin.Id }}"/>
+                            <img src="/qr/{{ $.Bin.Id }}" alt="QR code for {{ .BinUrl }}"/>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -397,7 +396,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header alert-secondary">
-                        <h5 class="modal-title" id="modelLockBinTitle">Lock bin</h5>
+                        <h5 class="modal-title" id="modalLockBinTitle">Lock bin</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -412,7 +411,7 @@
                         <div class="pull-left">
                         <button type="button" class="btn btn-warning" id="lockButton" onclick="lockBin('{{ $.Bin.Id }}','lockStatus')"><i class="fas fa-fw fa-lock"></i> Confirm</button>
                         </div>
-                        <a class="btn btn-secondary" href="/{{ $.Bin.Id }}" class="btn btn-secondary"><i class="fa fa-close"></i> Close</a>
+                        <a href="/{{ $.Bin.Id }}" class="btn btn-secondary"><i class="fa fa-close"></i> Close</a>
                     </div>
                 </div>
             </div>
@@ -425,7 +424,7 @@
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header alert-secondary">
-                            <h5 class="modal-title" id="modelDeleteFileTitle">Delete file</h5>
+                            <h5 class="modal-title" id="modalDeleteFileTitle">Delete file</h5>
                             <!--<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
                             <a class="btn-close" href="/{{ $.Bin.Id }}"></a>
                         </div>
@@ -434,12 +433,13 @@
                             <p>This action is not reversible.</p>
 
                             <p class="lead">Delete the file
-                            {{ if isApproved $.Bin }}
+                                {{ if isApproved $.Bin }}
                                     <a class="link-primary" href="/{{ $.Bin.Id }}/{{ .Filename }}">{{ .Filename }}</a>
-                            {{ else }}
+                                {{ else }}
                                     {{ .Filename }}
-                            {{ end }}
-                            ?</p>
+                                {{ end }}
+                                ?
+                            </p>
 
                             <div id="deleteStatus-{{ $index }}"></div>
                         </div>
@@ -447,7 +447,7 @@
                             <div class="pull-left">
                             <button type="button" class="btn btn-danger" id="deleteButton" onclick="deleteURL('/{{ $.Bin.Id }}/{{ .Filename }}','deleteStatus-{{ $index }}')"><i class="fas fa-fw fa-trash-alt"></i> Confirm</button>
                             </div>
-                            <a class="btn btn-secondary" href="/{{ $.Bin.Id }}" class="btn btn-secondary"><i class="fa fa-close"></i> Close</a>
+                            <a href="/{{ $.Bin.Id }}" class="btn btn-secondary"><i class="fa fa-close"></i> Close</a>
                         </div>
                     </div>
                 </div>
@@ -461,11 +461,11 @@
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header alert-secondary">
-                            <h5 class="modal-title" id="modelFilePropertiesTitle">File properties</h5>
+                            <h5 class="modal-title" id="modalFilePropertiesTitle">File properties</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <ul class="row">
+                            <dl class="row">
                                 <dt class="col-sm-3">Filename</dt>
                                 <dd class="col-sm-9">
                                     {{ if isApproved $.Bin }}
@@ -484,8 +484,7 @@
 
                                 <dt class="col-sm-3">File size</dt>
                                 <dd class="col-sm-9">
-                                    {{ .BytesReadable }}
-                                    ({{ .Bytes }} bytes)
+                                    {{ .BytesReadable }} ({{ .Bytes }} bytes)
                                 </dd>
 
                                 {{ if ne .CreatedAt .UpdatedAt }}
@@ -514,7 +513,7 @@
                                     {{ end }}
                                     ({{ $.Bin.ExpiredAt.Format "2006-01-02 15:04:05 UTC" }})
                                 </dd>
-                            </ul>
+                            </dl>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -530,7 +529,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header alert-secondary">
-                        <h5 class="modal-title" id="modelApprovalInfoTitle">Pending approval</h5>
+                        <h5 class="modal-title" id="modalApprovalInfoTitle">Pending approval</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">

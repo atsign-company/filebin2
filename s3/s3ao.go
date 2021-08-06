@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -17,6 +18,7 @@ import (
 type S3AO struct {
 	client *minio.Client
 	bucket string
+	expiry time.Duration
 }
 
 type BucketInfo struct {
@@ -31,7 +33,7 @@ type BucketInfo struct {
 }
 
 // Initialize S3AO
-func Init(endpoint, bucket, region, accessKey, secretKey string, secure bool) (S3AO, error) {
+func Init(endpoint, bucket, region, accessKey, secretKey string, secure bool, presignExpiry time.Duration) (S3AO, error) {
 	var s3ao S3AO
 
 	// Set up client for S3AO
@@ -46,6 +48,7 @@ func Init(endpoint, bucket, region, accessKey, secretKey string, secure bool) (S
 
 	s3ao.client = minioClient
 	s3ao.bucket = bucket
+	s3ao.expiry = presignExpiry
 
 	fmt.Printf("Established session to S3AO at %s\n", endpoint)
 
@@ -213,16 +216,22 @@ func (s S3AO) PresignedGetObject(bin string, filename string, mime string) (pres
 	f.Write([]byte(filename))
 	objectKey := path.Join(fmt.Sprintf("%x", b.Sum(nil)), fmt.Sprintf("%x", f.Sum(nil)))
 
-	// Presigned GET URLs expire after this amount of seconds
-	// TODO: Make configurable
-	expiry := time.Second * 60
-
 	reqParams := make(url.Values)
 	reqParams.Set("response-content-type", mime)
-	reqParams.Set("response-content-disposition", fmt.Sprintf("filename=\"%s\"", filename))
-	reqParams.Set("response-cache-control", fmt.Sprintf("max-age=%.0f, must-revalidate", expiry.Seconds()))
 
-	presignedURL, err = s.client.PresignedGetObject(context.Background(), s.bucket, objectKey, expiry, reqParams)
+	switch {
+	case strings.HasPrefix(mime, "text/html"), strings.HasPrefix(mime, "application/pdf"):
+		// Tell browser to handle this as an attachment. For text/html, this
+		// is a small barrier to reduce phishing.
+		reqParams.Set("response-content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	default:
+		// Browser to decide how to handle the rest of the content-types
+		reqParams.Set("response-content-disposition", fmt.Sprintf("filename=\"%s\"", filename))
+	}
+
+	reqParams.Set("response-cache-control", fmt.Sprintf("max-age=%.0f", s.expiry.Seconds()))
+
+	presignedURL, err = s.client.PresignedGetObject(context.Background(), s.bucket, objectKey, s.expiry, reqParams)
 	if err != nil {
 		return presignedURL, err
 	}
@@ -231,31 +240,29 @@ func (s S3AO) PresignedGetObject(bin string, filename string, mime string) (pres
 }
 
 func (s S3AO) GetBucketInfo() (info BucketInfo) {
-	opts := minio.ListObjectsOptions{
-		Prefix:    "",
-		Recursive: true,
-	}
+	//opts := minio.ListObjectsOptions{
+	//	Prefix:    "",
+	//	Recursive: true,
+	//}
 
-	objectCh := s.client.ListObjects(context.Background(), s.bucket, opts)
+	//objectCh := s.client.ListObjects(context.Background(), s.bucket, opts)
 	var size int64
 	var numObjects uint64
-	for object := range objectCh {
-		if object.Err != nil {
-			fmt.Println(object.Err)
-			return info
-		}
-		size = size + object.Size
-		numObjects = numObjects + 1
-	}
+	//for object := range objectCh {
+	//	if object.Err != nil {
+	//		fmt.Println(object.Err)
+	//		return info
+	//	}
+	//	size = size + object.Size
+	//	numObjects = numObjects + 1
+	//}
 
-	info.Objects = numObjects
-	info.ObjectsReadable = humanize.Comma(int64(numObjects))
-	info.ObjectsSize = uint64(size)
-	info.ObjectsSizeReadable = humanize.Bytes(info.ObjectsSize)
+	//info.Objects = numObjects
+	//info.ObjectsReadable = humanize.Comma(int64(numObjects))
+	//info.ObjectsSize = uint64(size)
+	//info.ObjectsSizeReadable = humanize.Bytes(info.ObjectsSize)
 
 	multiPartObjectCh := s.client.ListIncompleteUploads(context.Background(), s.bucket, "", true)
-	size = 0
-	numObjects = 0
 	for multiPartObject := range multiPartObjectCh {
 		if multiPartObject.Err != nil {
 			fmt.Println(multiPartObject.Err)

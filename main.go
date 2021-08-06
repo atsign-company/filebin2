@@ -40,29 +40,51 @@ var (
 	dbHostFlag     = flag.String("db-host", os.Getenv("DATABASE_HOST"), "Database host")
 	dbPortFlag     = flag.String("db-port", os.Getenv("DATABASE_PORT"), "Database port")
 	dbNameFlag     = flag.String("db-name", os.Getenv("DATABASE_NAME"), "Name of the database")
-	dbUsernameFlag = flag.String("db-username", os.Getenv("DATABASE_USERNAME"), "Database username")
-	dbPasswordFlag = flag.String("db-password", os.Getenv("DATABASE_PASSWORD"), "Database password")
+	dbUsernameFlag = flag.String("db-username", "", "Database username")
+	dbPasswordFlag = flag.String("db-password", "", "Database password")
 
 	// S3
 	s3EndpointFlag  = flag.String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 endpoint")
 	s3BucketFlag    = flag.String("s3-bucket", os.Getenv("S3_BUCKET"), "S3 bucket")
 	s3RegionFlag    = flag.String("s3-region", os.Getenv("S3_REGION"), "S3 region")
-	s3AccessKeyFlag = flag.String("s3-access-key", os.Getenv("S3_ACCESS_KEY"), "S3 access key")
-	s3SecretKeyFlag = flag.String("s3-secret-key", os.Getenv("S3_SECRET_KEY"), "S3 secret key")
+	s3AccessKeyFlag = flag.String("s3-access-key", "", "S3 access key")
+	s3SecretKeyFlag = flag.String("s3-secret-key", "", "S3 secret key")
 	s3TraceFlag     = flag.Bool("s3-trace", false, "Enable S3 HTTP tracing for debugging")
 	s3SecureFlag    = flag.Bool("s3-secure", true, "Use TLS when connecting to S3")
+	s3UrlTtlFlag    = flag.String("s3-url-ttl", "1m", "The time to live for presigned S3 URLs, for example 30s or 5m")
 
 	// Lurker
 	lurkerIntervalFlag = flag.Int("lurker-interval", 300, "Lurker interval is the delay to sleep between each run in seconds")
+	logRetentionFlag   = flag.Uint64("log-retention", 7, "The number of days to keep log entries before removed by the lurker.")
 
 	// Auth
-	adminUsernameFlag = flag.String("admin-username", os.Getenv("ADMIN_USERNAME"), "Admin username")
-	adminPasswordFlag = flag.String("admin-password", os.Getenv("ADMIN_PASSWORD"), "Admin password")
+	adminUsernameFlag = flag.String("admin-username", "", "Admin username")
+	adminPasswordFlag = flag.String("admin-password", "", "Admin password")
 )
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Parse()
+
+	// Set some default values that should not be exposed by flag.PrintDefaults()
+	if *dbUsernameFlag == "" {
+		*dbUsernameFlag = os.Getenv("DATABASE_USERNAME")
+	}
+	if *dbPasswordFlag == "" {
+		*dbPasswordFlag = os.Getenv("DATABASE_PASSWORD")
+	}
+	if *s3AccessKeyFlag == "" {
+		*s3AccessKeyFlag = os.Getenv("S3_ACCESS_KEY")
+	}
+	if *s3SecretKeyFlag == "" {
+		*s3SecretKeyFlag = os.Getenv("S3_SECRET_KEY")
+	}
+	if *adminUsernameFlag == "" {
+		*adminUsernameFlag = os.Getenv("ADMIN_USERNAME")
+	}
+	if *adminPasswordFlag == "" {
+		*adminPasswordFlag = os.Getenv("ADMIN_PASSWORD")
+	}
 
 	// mmdb path
 	geodb, err := geoip.Init(*mmdbPathFlag)
@@ -86,7 +108,14 @@ func main() {
 		fmt.Printf("Unable to create Schema: %s\n", err.Error())
 	}
 
-	s3conn, err := s3.Init(*s3EndpointFlag, *s3BucketFlag, *s3RegionFlag, *s3AccessKeyFlag, *s3SecretKeyFlag, *s3SecureFlag)
+	s3UrlTtl, err := time.ParseDuration(*s3UrlTtlFlag)
+	if err != nil {
+		fmt.Printf("Unable to parse --s3-url-ttl: %s\n", err.Error())
+		os.Exit(2)
+	}
+	fmt.Printf("TTL for presigned S3 URLs: %s\n", s3UrlTtl.String())
+
+	s3conn, err := s3.Init(*s3EndpointFlag, *s3BucketFlag, *s3RegionFlag, *s3AccessKeyFlag, *s3SecretKeyFlag, *s3SecureFlag, s3UrlTtl)
 	if err != nil {
 		fmt.Printf("Unable to initialize S3 connection: %s\n", err.Error())
 		os.Exit(2)
@@ -102,7 +131,7 @@ func main() {
 	}
 
 	// Start the lurker process
-	l.Init(*lurkerIntervalFlag)
+	l.Init(*lurkerIntervalFlag, *logRetentionFlag)
 	l.Run()
 
 	staticBox := rice.MustFindBox("static")
@@ -147,7 +176,7 @@ func main() {
 	if err := h.Init(); err != nil {
 		fmt.Printf("Unable to start the HTTP server: %s\n", err.Error())
 	}
-	fmt.Printf("Expiration: %s\n", config.ExpirationDuration.String())
+	fmt.Printf("Uploaded files expiration: %s\n", config.ExpirationDuration.String())
 
 	// Start the http server
 	h.Run()
