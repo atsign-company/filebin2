@@ -23,15 +23,17 @@ first create a namespace called filebin2
 
 Then edit the deployment and service files with your details and deploy them. The service file also shows the annotations needed for an SSL load balancer using AWS, for this create an SSL certificate first.
 
-Then deploy.
+First a service (Very important this is done first if you are using a StatefulSet)
+**kubectl -n filebin2 apply -f  service/filebin2-service.yaml**
 
+As a deployment
 **kubectl -n filebin2 apply -f  deployments/filebin2-deployment.yaml**
 
-and
+Or as a StatefulSet (if you need more /tmp space than the k8s node provide ) -Prefered approach
 
-**kubectl -n filebin2 apply -f  service/filebin2-service.yaml**
+**kubectl -n filebin2 apply -f  statefulsets/filebin2-statefulset.yaml**
+
 
 At this point you should have a working version of filebin2 running on k8s congrats!
 
 
-> Written with [StackEdit](https://stackedit.io/).
