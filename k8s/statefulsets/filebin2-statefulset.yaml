@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: filebin2-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: filebin2-statefulset
+  serviceName: "filebin2-service"
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: filebin2-statefulset
+    spec:
+      containers:
+      - args:
+          - '-db-host'
+          - <database hostname>
+          - '-db-name'
+          - <database name>
+          - '-db-password'
+          - <database password>
+          - '-db-port'
+          - <database port number>
+          - '-db-username'
+          - <database username>
+          - '-listen-host'
+          - 0.0.0.0
+          - '--baseurl'
+          - <baseurl>
+        env:
+          - name: S3_ENDPOINT
+            value: <DNS location of bucket>
+          - name: S3_REGION
+            value: <s3 region>
+          - name: S3_BUCKET
+            value: <bucket name>
+          - name: S3_ACCESS_KEY
+            value: <s3 access key>
+          - name: S3_SECRET_KEY
+            value: <s3 secret key>
+          - name: S3_ENCRYPTION_KEY
+            value: <s3 encryption key>
+          - name: ADMIN_USERNAME
+            value: <admin username>
+          - name: ADMIN_PASSWORD
+            value: <admin password>
+        envFrom:
+        - secretRef:
+            name: fb2usecrets
+        image: <xxxxxxxx/filebin2 or your docker image>
+        imagePullPolicy: Always
+        name: filebin2upstream
+        resources:
+          limits:
+            cpu: 250m
+            ephemeral-storage: 2Gi
+            memory: 4Gi
+          requests:
+            cpu: 250m
+            ephemeral-storage: 2Gi
+            memory: 4Gi
+        volumeMounts:
+        - name: filebin2-pvc
+          mountPath: /tmp
+      securityContext:
+        fsGroup: <Group of defgault user so filebin2 can write to /tmp>
+        seccompProfile:
+          type: RuntimeDefault
+  volumeClaimTemplates:
+  - metadata:
+      name: filebin2-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 100Gi
+      storageClassName: standard
